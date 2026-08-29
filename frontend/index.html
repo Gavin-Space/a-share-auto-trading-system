@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Trading Dashboard</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px }
+      #log { white-space: pre-wrap; border: 1px solid #ddd; padding: 10px; height: 400px; overflow: auto }
+      .tick { color: green }
+      .fill { color: blue }
+    </style>
+  </head>
+  <body>
+    <h2>A-Share Auto Trading System - Dashboard</h2>
+    <div>
+      <button onclick="startReplay()">Start Replay (example.csv)</button>
+      <button onclick="startStrategy()">Start Strategy</button>
+    </div>
+    <h3>Events</h3>
+    <div id="log"></div>
+
+    <script>
+      const logEl = document.getElementById('log');
+      const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws/market');
+      ws.onmessage = (ev) => {
+        const data = JSON.parse(ev.data);
+        const line = JSON.stringify(data);
+        const div = document.createElement('div');
+        div.textContent = line;
+        if (data.type === 'tick') div.className = 'tick';
+        if (data.type === 'fill') div.className = 'fill';
+        logEl.prepend(div);
+      };
+
+      async function startReplay() {
+        // attempts to start replay of frontend/example.csv (you should place a CSV at that path)
+        const resp = await fetch('/start_replay?csv_path=example.csv&speed=10', {method:'POST'});
+        const j = await resp.json();
+        alert(JSON.stringify(j));
+      }
+      async function startStrategy() {
+        const resp = await fetch('/start_executor', {method:'POST'});
+        await resp.json();
+        const resp2 = await fetch('/start_strategy', {method:'POST'});
+        const j = await resp2.json();
+        alert(JSON.stringify(j));
+      }
+    </script>
+  </body>
+</html>
